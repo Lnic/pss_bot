@@ -84,7 +84,7 @@ async def recipe(*,request : str):
                 await bot.say("There are no recorded recipes for %s"%(request.title()))
                 return
             else:
-                await bot.say("These combinations are listed as potentially making %s: %s"%(request.title(), result))
+                await bot.say("These combinations are listed as potentially making %s: ```%s```"%(request.title(), result))
                 return
         except:
             await bot.say("There are no recorded recipes for %s"%(request.title()))
@@ -105,7 +105,7 @@ async def recipe(*,request : str):
             else:
                 for combo in result:
                     combo.remove(names[0].title())
-                await bot.say("According to records, combining %s with the following: \n\n %s \n\nwill yield %s"%(names[0].title(),set([x[0] for x in result]),names[1].title()))
+                await bot.say("According to records, combining %s with the following: \n\n ```%s``` \n\nwill yield %s"%(names[0].title(),set([x[0] for x in result]),names[1].title()))
                 return
         else:
             result=[combo for combo in result if names[1].title() in combo]#looking for another parent
@@ -115,7 +115,7 @@ async def recipe(*,request : str):
             else:
                 for combo in result:
                     combo.remove(names[1].title())
-                await bot.say("According to records, combining %s with the following: \n\n %s \n\nwill yield %s"%(names[1].title(),set([x[0] for x in result]),names[0].title()))
+                await bot.say("According to records, combining %s with the following: \n\n ```%s``` \n\nwill yield %s"%(names[1].title(),set([x[0] for x in result]),names[0].title()))
                 return
     except:
         await bot.say("Not sure. Check spelling. I will also only calculate for 2 crew (1 generation). I will also probably have trouble with Visiri Capt'n")
@@ -140,7 +140,7 @@ async def prestige(*,request : str):
     """Returns data on prestige results for the two crew members entered as input"""
     if request.lower()=="visiri capt'n": #Visiri Captain is weird, okay?
         result=(set([x for x in unique if x[0]=="Visiri Capt'n"][0][1:]))
-        await bot.say("%s is recorded as being used in %s"%("Visiri Capt'n", result))
+        await bot.say("%s is recorded as being used in ```%s```"%("Visiri Capt'n", result))
         return
     if ',' in request:
         names = request.lower().split(',')
@@ -158,7 +158,7 @@ async def prestige(*,request : str):
             await bot.say("No known recipes including %s"%(request.title()))
             return
         else:
-            await bot.say("%s is recprded as being used in %s"%(request.title(), result))
+            await bot.say("%s is recorded as being used in ```%s```"%(request.title(), result))
             return
     if names[1][0] == ' ':
         names[1] = names[1][1:]
