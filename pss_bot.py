@@ -82,6 +82,7 @@ def all_crew_values(source):
         
 pss_api=open("ListAllCharacterDesigns2.txt","r+").read()
 all_crew_values(pss_api)
+equipment_loadouts={6:'Chest and Legs', 24:'Shoulder and Hand', 5:'Head and Legs', 8:'Hand', 9:'Head and Hand', 10:'Chest and Hand', 12:'Hand and Legs', 3:'Head and Chest'}
 
 print ('Crew data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
@@ -232,14 +233,26 @@ async def stats(*,request : str):
     if request.lower()=='help':
         await bot.say("Give a crew name and a stat separated by a comma. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
         return
+    if request.lower()=='equip' or request.lower()=='equipment':
+        await bot.say("```%s```"%(equipment_loadouts))
+        return
     if request.lower()=='names':
         await bot.say("Valid names are: ```%s```"%(crew.keys()))
     if ',' in request:
         request = request.lower().split(',')
     if request[1][0] == ' ':
         request[1] = request[1][1:]
+    if request[0].lower()=='equip' or request[0].lower()=='equipment':
+        try:
+            await bot.say("Loadout %s is for ```%s```"%(request[1],equipment_loadouts[int(request[1])]))
+            return
+        except:
+            await bot.say("I don't know how you got here")
+            return
     try:
         await bot.say("%s's %s is: %s"%(request[0].title(), request[1], getattr(crew[request[0]],request[1])))
+        if request[1].lower=='equip' or request[1].lower()=='equipment':
+            await bot.say("```%s```"%(equipment_loadouts[int(getattr(crew[request[0]],request[1]))]))
     except:
         await bot.say("I don't understand something. Try ?help to correct spelling")
   
