@@ -40,6 +40,8 @@ add_to_prestiges(uniques,unique)
 
 print ('Prestige data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
+import urllib.request
+
 def finder(target, source):
     return source[source.find(target)+len(target)+1:source.find('"',source.find(target)+len(target)+2)]
 
@@ -60,6 +62,7 @@ class Crew:
         self.engine = finder("FinalEngine=",source)
         self.research = finder("FinalResearch=",source)
         self.walking_speed = finder("WalkingSpeed=",source)
+        self.running_speed = finder("RunSpeed=",source)
         self.rarity = finder("Rarity=",source)
         self.progression = finder("ProgressionType=",source)
         self.xp = finder("XpRequirementScale=",source)
@@ -69,20 +72,24 @@ class Crew:
         self.equipment = finder("EquipmentMask=",source)
 
 crew={}
+metrics=['name','gender','race','hp','pilot','attack','fire_resistance','repair','weapon','shield','engine','research','walking_speed','running_speed','rarity','progression','xp','special_type','special','training','equipment']
+equipment_loadouts={6:'Chest and Legs', 24:'Shoulder and Hand', 5:'Head and Legs', 8:'Hand', 9:'Head and Hand', 10:'Chest and Hand', 12:'Hand and Legs', 3:'Head and Chest'}
 
 def all_crew_values(source):
     text=source[:]
     while len(text)>0:
-        name=(str(finder("CharacterDesignName=",text)).lower())
-        crew[name]=Crew(text,str(name))
-        if text.find("/CharacterDesign")>0:
-            text=text[text.find("/CharacterDesign")+len("/CharacterDesign")+1:]
+        if text.find(r"/CharacterDesign>")>0:
+            name=(str(finder("CharacterDesignName=",text)).lower())
+            crew[name]=Crew(text,str(name))
+            text=text[text.find(r"/CharacterDesign>")+len(r"/CharacterDesign>")+1:]
         else:
             break
         
-pss_api=open("ListAllCharacterDesigns2.txt","r+").read()
+#pss_api=open("ListAllCharacterDesigns2.txt","r+").read()
+with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response:
+    pss_api = response.read()
+pss_api = pss_api.decode("utf-8")
 all_crew_values(pss_api)
-equipment_loadouts={6:'Chest and Legs', 24:'Shoulder and Hand', 5:'Head and Legs', 8:'Hand', 9:'Head and Hand', 10:'Chest and Hand', 12:'Hand and Legs', 3:'Head and Chest'}
 
 print ('Crew data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
@@ -101,10 +108,11 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+    print ('Full prep complete. Time Elapsed :'+str(time.clock()-time_start))
     await bot.change_presence(game=discord.Game(name='Try ?commandlist'))
  
 @bot.command(aliases=["CommandList", "Commandlist", "Command List", "command list", "commands", "Commands", "command", "Command"])
-async def commandlist(*, request : str):
+async def commandlist(*, request : str=None):
     try:
         if request.lower()=="prestige" or request.lower()=="prestiges":
             await bot.say("Input: 1 crew name or 2 crew names separated by a comma. Gives result of crew prestige if known. Gives known possibilities for prestige if only 1 name is given")
@@ -115,10 +123,13 @@ async def commandlist(*, request : str):
         elif request.lower()=="stats" or request.lower()=="stat":
             await bot.say("Gives requested stats for listed crew member. Use ?stats help for more information")
     except:
-        await bot.say("I don't know what that is")
+        await bot.say("Try ?command with prestige, recipes, stats, or namelist")
 
 @bot.command(aliases=["recipes", "Recipe", "Recipes"])
 async def recipe(*,request : str):
+    if request.lower()=='help' or request.lower()=='names':
+        await bot.say("Names for prestige results are: ```%s```"%(set([prestiges[combo] for combo in prestiges])))
+        return
     if ',' in request:
         names = request.lower().split(',')
         if names[1][0] == ' ':
@@ -143,34 +154,35 @@ async def recipe(*,request : str):
         for combo in prestiges:
             if names[0].lower() in prestiges[combo]: #names[0] is the child here
                 result.append([combo.lower().split('_')][0])
-        if not [x for x in result if names[1].lower() in x]:
+        if not [x for x in result if names[1].lower() in x]: #check if the proposed parent is in the combinations
+            result=[]
             for combo in prestiges:
-                if names[1].title() in prestiges[combo]: #names[1] is the child here
-                    result.append([combo.title().split('_')][0])
-            result=[combo for combo in result if names[0].title() in combo]#looking for another parent
+                if names[1].lower() in prestiges[combo]: #names[1] is the child here
+                    result.append([combo.lower().split('_')][0])
+            result=[combo for combo in result if names[0].lower() in combo]#looking for another parent
             if result==[]:
                 await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title()))
                 return
             else:
                 for combo in result:
-                    combo.remove(names[0].title())
-                await bot.say("According to records, combining %s with the following: \n\n ```%s``` \n\nwill yield %s"%(names[0].title(),set([x[0] for x in result]),names[1].title()))
+                    combo.remove(names[0].lower())
+                await bot.say("According to records, combining %s with the following: \n```%s``` \nmay yield %s. Remember, only Legendary combinations are guaranteed by Savy"%(names[0].title(),set([x[0].title() for x in result]),names[1].title()))
                 return
         else:
-            result=[combo for combo in result if names[1].title() in combo]#looking for another parent
+            result=[combo for combo in result if names[1].lower() in combo]#looking for another parent
             if result==[]:
                 await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title()))
                 return
             else:
                 for combo in result:
-                    combo.remove(names[1].title())
-                await bot.say("According to records, combining %s with the following: \n\n ```%s``` \n\nwill yield %s"%(names[1].title(),set([x[0] for x in result]),names[0].title()))
+                    combo.remove(names[1].lower())
+                await bot.say("According to records, combining %s with the following: \n```%s``` \nmay yield %s. Remember, only Legendary combinations are guaranteed by Savy"%(names[1].title(),set([x[0].title() for x in result]),names[0].title()))
                 return
     except:
         await bot.say("Not sure. Check spelling. I will also only calculate for 2 crew (1 generation). I will also probably have trouble with Visiri Capt'n")
     
 @bot.command(aliases=["names"])
-async def namelist(request : str):
+async def namelist(request : str=''):
     """returns a list of valid names"""
     if request.lower()=='legendary' or request.lower()=='legendaries' or request.lower()=='legend':
         await bot.say('The following is a list of all known names of Legendary Crew. I will likely only understand names that are typed as follows:')
@@ -231,15 +243,24 @@ async def prestige(*,request : str):
 @bot.command(aliases=["Stats", 'stat', 'Stat'])
 async def stats(*,request : str):
     if request.lower()=='help':
-        await bot.say("Give a crew name and a stat separated by a comma. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
+        await bot.say("Give a crew name or a crew name and a stat separated by a comma. All stats will be given if no specific stat is provided. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, running_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
         return
     if request.lower()=='equip' or request.lower()=='equipment':
         await bot.say("```%s```"%(equipment_loadouts))
         return
     if request.lower()=='names':
         await bot.say("Valid names are: ```%s```"%(crew.keys()))
+        return
     if ',' in request:
         request = request.lower().split(',')
+    else:
+        try:
+            request = request.lower()
+            await bot.say("```Name: %s \nGender: %s\nRace: %s \nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nRarity: %s \nProgression: %s \nXP: %s \nSpecial Type: %s \nSpecial: %s \nTraining: %s \nEquipment: %s - %s```"%(getattr(crew[request],metrics[0]).title(),getattr(crew[request],metrics[1]),getattr(crew[request],metrics[2]),getattr(crew[request],metrics[3]),getattr(crew[request],metrics[4]),getattr(crew[request],metrics[5]),getattr(crew[request],metrics[6]),getattr(crew[request],metrics[7]),getattr(crew[request],metrics[8]),getattr(crew[request],metrics[9]),getattr(crew[request],metrics[10]),getattr(crew[request],metrics[11]),getattr(crew[request],metrics[12]),getattr(crew[request],metrics[13]),getattr(crew[request],metrics[14]),getattr(crew[request],metrics[15]),getattr(crew[request],metrics[16]),getattr(crew[request],metrics[17]),getattr(crew[request],metrics[18]),getattr(crew[request],metrics[19]),getattr(crew[request],metrics[20]),equipment_loadouts[int(getattr(crew[request],metrics[20]))]))
+            return
+        except:
+            await bot.say("I don't quite recognize that. Try ```?stats names``` for valid inputs. Some crew are tricky for me, like Green Ranger - Oliver")
+            return
     if request[1][0] == ' ':
         request[1] = request[1][1:]
     if request[0].lower()=='equip' or request[0].lower()=='equipment':
@@ -254,6 +275,6 @@ async def stats(*,request : str):
         if request[1].lower=='equip' or request[1].lower()=='equipment':
             await bot.say("```%s```"%(equipment_loadouts[int(getattr(crew[request[0]],request[1]))]))
     except:
-        await bot.say("I don't understand something. Try ?help to correct spelling")
+        await bot.say("I don't understand something. Try ```?stats names``` to correct spelling")
   
 bot.run('Mjc0NDU1NTg5NTY2ODA4MDc2.C2yWMw.uFEcuSxiZRJPp-UkloTvWV0z84Q')
