@@ -156,16 +156,17 @@ async def recipe(*,request : str):
         names = request.lower().split(',')
         if names[1][0] == ' ':
             names[1] = names[1][1:]
-    else:
+    else: #This will handle single name requests
         result=[]
-        for combo in prestiges:
+        for combo in prestiges: #Find all prestige combinations that generate the request
             if fuzz.partial_ratio(request, prestiges[combo]) > search_threshold:
-                result.append([combo.lower().split('_')][0])
+                result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo]))
         if result==[]:
             await bot.say("There are no recorded recipes for %s"%(request.title()))
             return
         else:
-            await bot.say("These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking you chosen recipe with ?prestige or the spreadsheet")
+            phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+            await bot.say(phrase)
             return
     result=[]
     for combo in prestiges:
@@ -230,7 +231,8 @@ async def prestige(*,request : str):
             await bot.say("There are no known recipes including %s"%crew)
             return
         else:
-            await bot.say("%s was parsed to mean \"%s\" who is listed as being used in:\n"%(request,crew)+lined_string(result))
+            phrase = "%s was parsed to mean \"%s\" who is listed as being used in:"%(request,crew)+lined_string(result)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+            await bot.say(phrase)
             return
     key_1 = process.extractOne(request,prestiges.keys(),scorer=fuzz.partial_ratio)[0]
     if prestiges[key_1]:
@@ -242,7 +244,8 @@ async def prestige(*,request : str):
         result_2 = prestiges[key_2]
     else:
         result_2 = "Unlisted"
-    await bot.say("%s was parsed as %s which yields:\n```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2))
+    phrase = "%s was parsed as %s which yields:\n```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+    await bot.say(phrase)
 
 @bot.command(aliases=["Stats", 'stat', 'Stat'])
 async def stats(*,request : str):
