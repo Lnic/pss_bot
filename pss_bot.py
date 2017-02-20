@@ -1,13 +1,12 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import os
 import time
 import discord
 from discord.ext import commands
-import random
 import logging
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+import Levenshtein
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -169,28 +168,24 @@ async def recipe(*,request : str):
             await bot.say(phrase)
             return
     result=[]
-    for combo in prestiges:
+    for combo in prestiges:#This tree will handle prospective parent/child combinations
         if fuzz.partial_ratio(names[0], prestiges[combo]) > search_threshold: #names[0] is the child/product here. This yields a list of all recipes making the child/product
-            result.append([combo.lower().split('_')][0]) #entries in result will be a list of two names
-            result = [x for x in result if process.extractOne(names[1],x,scorer=fuzz.partial_ratio)[1] > search_threshold]#remove all entries which do not contain the parent/reagent, names[1]
-    if not result:#check if the previous step removed everything
+            result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo])) #entries in result will be the full combination
+    result = [x for x in result if fuzz.partial_ratio(names[1],x) > search_threshold]#Take only entries which contain the parent/reagent, names[1]    
+    if not result:#If no entries contained the prevoius parent/reagent, names[1]...
         for combo in prestiges:#try it the other way around with names[1] as the child/product
             if fuzz.partial_ratio(names[1], prestiges[combo]) > search_threshold: #names[1] is the child here
-                result.append([combo.lower().split('_')][0])
-                result = [x for x in result if process.extractOne(names[0],x,scorer=fuzz.partial_ratio)[1] > search_threshold]#remove all entries which do not contain the parent/reagent, names[0]
+                result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo]))
+        result = [x for x in result if fuzz.partial_ratio(names[0],x) > search_threshold]#Take only entries which contain the parent/reagent, names[0]
         if not result:
             await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title()))
             return
         else:
-            for combo in result: #Removing the known element
-                combo.remove(process.extractOne(names[0],combo,scorer=fuzz.partial_ratio)[0])
-            await bot.say("According to records, combining %s with the following:"%names[0].title()+lined_string(sorted(set([x[0].title() for x in result])))+"may yield %s. Remember, only Legendary combinations are guaranteed by Savy"%names[1].title()+"\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
+            await bot.say("According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
             return
     else:
-        for combo in result:
-            combo.remove(process.extractOne(names[1],combo,scorer=fuzz.partial_ratio)[0])
-            await bot.say("According to records, combining %s with the following:"%names[1].title()+lined_string(sorted(set([x[0].title() for x in result])))+"may yield %s. Remember, only Legendary combinations are guaranteed by Savy"%names[0].title()+"\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
-            return
+        await bot.say("According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
+        return
     
 @bot.command(aliases=["names"])
 async def namelist(request : str=''):
@@ -244,11 +239,12 @@ async def prestige(*,request : str):
         result_2 = prestiges[key_2]
     else:
         result_2 = "Unlisted"
-    phrase = "%s was parsed as %s which yields:\n```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+    phrase = "%s was parsed as %s which yields:```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
     await bot.say(phrase)
 
 @bot.command(aliases=["Stats", 'stat', 'Stat'])
 async def stats(*,request : str):
+    """Provides stat readouts for requested crew"""
     initial_request = request
     if request.lower()=='help':
         await bot.say("Give a crew name or a crew name and a stat separated by a comma. All stats will be given if no specific stat is provided. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, running_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
