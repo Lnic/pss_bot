@@ -112,6 +112,8 @@ all_crew_values(pss_api)
 def lined_string(text):
     return "```\n"+"%s\n"*len(text)%tuple(text)+"```\n"
 
+source_check = "Feel free to check my source at"+r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900 and report any errors to @DT-1236#0629"
+
 print ('Crew data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
 #######
@@ -158,10 +160,10 @@ async def recipe(*,request : str):
     else: #This will handle single name requests
         result=[]
         for combo in prestiges: #Find all prestige combinations that generate the request
-            if fuzz.partial_ratio(request, prestiges[combo]) > search_threshold:
-                result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo]))
+            if fuzz.partial_ratio(request.lower(), prestiges[combo]) > search_threshold:
+                result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo].title()))
         if result==[]:
-            await bot.say("There are no recorded recipes for %s"%(request.title()))
+            await bot.say("There are no recorded recipes for %s"%(request.title())+source_check)
             return
         else:
             phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
@@ -173,15 +175,15 @@ async def recipe(*,request : str):
     result=[]
     for combo in prestiges:#This tree will handle prospective parent/child combinations
         if fuzz.partial_ratio(names[0], prestiges[combo]) > search_threshold: #names[0] is the child/product here. This yields a list of all recipes making the child/product
-            result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo])) #entries in result will be the full combination
+            result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo])) #entries in result will be the full combination
     result = [x for x in result if fuzz.partial_ratio(names[1],x) > search_threshold]#Take only entries which contain the parent/reagent, names[1]    
     if not result:#If no entries contained the prevoius parent/reagent, names[1]...
         for combo in prestiges:#try it the other way around with names[1] as the child/product
             if fuzz.partial_ratio(names[1], prestiges[combo]) > search_threshold: #names[1] is the child here
-                result.append("%s = %s"%(([combo.lower().split('_')][0]),prestiges[combo]))
+                result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo]))
         result = [x for x in result if fuzz.partial_ratio(names[0],x) > search_threshold]#Take only entries which contain the parent/reagent, names[0]
         if not result:
-            await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title()))
+            await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title())+source_check)
             return
         else:
             phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet"
@@ -234,7 +236,7 @@ async def prestige(*,request : str):
         elif crew in sub_unique: 
             result = sorted(set([x for x in unique if x[0]==crew][0][1:]))
         if result==set():
-            await bot.say("There are no known recipes including %s"%crew)
+            await bot.say("There are no known recipes including %s"%crew+source_check)
             return
         else:
             phrase = "%s was parsed to mean \"%s\" who is listed as being used in:"%(request,crew)+lined_string(result)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
@@ -245,12 +247,12 @@ async def prestige(*,request : str):
             return
     key_1 = process.extractOne(request,prestiges.keys(),scorer=fuzz.partial_ratio)[0]
     if prestiges[key_1]:
-        result_1 = prestiges[key_1]
+        result_1 = prestiges[key_1].title()
     else:
         result_1 = "Unlisted"
     key_2 = process.extractOne(names[1]+names[0],prestiges.keys(),scorer=fuzz.partial_ratio)[0]
     if prestiges[key_2]:
-        result_2 = prestiges[key_2]
+        result_2 = prestiges[key_2].title()
     else:
         result_2 = "Unlisted"
     phrase = "%s was parsed as %s which yields:```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
