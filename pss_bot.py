@@ -165,6 +165,9 @@ async def recipe(*,request : str):
             return
         else:
             phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+            while len(phrase) > 1950:
+                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                phrase = "```"+phrase[phrase.find('[',1800):]
             await bot.say(phrase)
             return
     result=[]
@@ -181,10 +184,18 @@ async def recipe(*,request : str):
             await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title()))
             return
         else:
-            await bot.say("According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
+            phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet"
+            while len(phrase) > 1950:
+                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                phrase = "```"+phrase[phrase.find('[',1800):]
+            await bot.say(phrase)
             return
     else:
-        await bot.say("According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet")
+        phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet"
+        while len(phrase) > 1950:
+                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                phrase = "```"+phrase[phrase.find('[',1800):]
+        await bot.say(phrase)
         return
     
 @bot.command(aliases=["names"])
@@ -227,6 +238,9 @@ async def prestige(*,request : str):
             return
         else:
             phrase = "%s was parsed to mean \"%s\" who is listed as being used in:"%(request,crew)+lined_string(result)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+            while len(phrase) > 1950:
+                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                phrase = "```"+phrase[phrase.find('[',1800):]
             await bot.say(phrase)
             return
     key_1 = process.extractOne(request,prestiges.keys(),scorer=fuzz.partial_ratio)[0]
