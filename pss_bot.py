@@ -35,7 +35,7 @@ epic = sheet.worksheet("Heroes-PWW link").get_all_values()
 unique = sheet.worksheet("Epics-PWW link").get_all_values()
 
 def all_names(sheet): #Assembles all names in the sheet
-    return [x.lower() for x in sheet[0] if x!='']
+    return [x.lower() for x in sheet[0] if x]
 
 def add_to_prestiges(name_list, source_sheet): #Adds all values in that sheet to the Prestige dictionary
     for name1 in range(1,len(name_list)+1):
@@ -45,13 +45,9 @@ def add_to_prestiges(name_list, source_sheet): #Adds all values in that sheet to
 heroes = all_names(hero) #plural indicates name list
 epics = all_names(epic)
 uniques = all_names(unique)
-sub_hero = [x[0] for x in hero if x[0]!='']
-sub_epic = [x[0] for x in epic if x[0]!='']
-sub_unique = [x[0] for x in unique if x[0]!='']
-
 
 add_to_prestiges(heroes,hero)
-legendaries=list(set(prestiges.values()))
+legendaries=list(set([x.lower() for x in prestiges.values()]))
 add_to_prestiges(epics,epic)
 add_to_prestiges(uniques,unique)
 all_prestige_results = sorted(set([prestiges[combo] for combo in prestiges]))
@@ -70,23 +66,23 @@ class Crew:
         self.name = name
         self.gender = finder("GenderType=",source)
         self.race = finder("RaceType=",source)
-        self.hp = finder("FinalHp=",source)
-        self.pilot = finder("FinalPilot=",source)
-        self.attack = finder("FinalAttack=",source)
-        self.fire_resistance = finder("FireResistance=",source)
-        self.repair = finder("FinalRepair=",source)
-        self.weapon = finder("FinalWeapon=",source)
-        self.shield = finder("FinalShield=",source)
-        self.engine = finder("FinalEngine=",source)
-        self.research = finder("FinalResearch=",source)
-        self.walking_speed = finder("WalkingSpeed=",source)
-        self.running_speed = finder("RunSpeed=",source)
+        self.hp = float(finder("FinalHp=",source))
+        self.pilot = float(finder("FinalPilot=",source))
+        self.attack = float(finder("FinalAttack=",source))
+        self.fire_resistance = float(finder("FireResistance=",source))
+        self.repair = float(finder("FinalRepair=",source))
+        self.weapon = float(finder("FinalWeapon=",source))
+        self.shield = float(finder("FinalShield=",source))
+        self.engine = float(finder("FinalEngine=",source))
+        self.research = float(finder("FinalResearch=",source))
+        self.walking_speed = float(finder("WalkingSpeed=",source))
+        self.running_speed = float(finder("RunSpeed=",source))
         self.rarity = finder("Rarity=",source)
         self.progression = finder("ProgressionType=",source)
         self.xp = finder("XpRequirementScale=",source)
         self.special_type = finder("SpecialAbilityType=",source)
-        self.special = finder("SpecialAbilityFinalArgument=",source)
-        self.training = finder("TrainingCapacity=",source)
+        self.special = float(finder("SpecialAbilityFinalArgument=",source))
+        self.training = float(finder("TrainingCapacity=",source))
         self.equipment = finder("EquipmentMask=",source)
 
 crew={}
@@ -103,7 +99,7 @@ def all_crew_values(source):
         else:
             break
         
-#pss_api=open("ListAllCharacterDesigns2.txt","r+").read()
+#pss_api=open("ListAllCharacterDesigns2.txt","r+").read() #If ever I need to switch to offline character data
 with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response:
     pss_api = response.read()
 pss_api = pss_api.decode("utf-8")
@@ -112,7 +108,7 @@ all_crew_values(pss_api)
 def lined_string(text):
     return "```\n"+"%s\n"*len(text)%tuple(text)+"```\n"
 
-source_check = "Feel free to check my source at"+r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900 and report any errors to @DT-1236#0629"
+source_check = "\nFeel free to check my source at"+r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900 and report any errors to @DT-1236#0629"
 
 print ('Crew data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
@@ -163,6 +159,10 @@ async def recipe(*,request : str):
             if fuzz.partial_ratio(request.lower(), prestiges[combo]) > search_threshold:
                 result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo].title()))
         if result==[]:
+            unique_check = process.extractOne(request, uniques, scorer = fuzz.partial_ratio)
+            if unique_check[1] > search_threshold:
+                await bot.say("%s was parsed as %s which is a unique. Since uniques are obtainable through mineral draws, prestige recipes including elite crew are not recorded."%(request,unique_check[0]))
+                return
             await bot.say("There are no recorded recipes for %s"%(request.title())+source_check)
             return
         else:
@@ -174,26 +174,26 @@ async def recipe(*,request : str):
             return
     result=[]
     for combo in prestiges:#This tree will handle prospective parent/child combinations
-        if fuzz.partial_ratio(names[0], prestiges[combo]) > search_threshold: #names[0] is the child/product here. This yields a list of all recipes making the child/product
-            result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo])) #entries in result will be the full combination
-    result = [x for x in result if fuzz.partial_ratio(names[1],x) > search_threshold]#Take only entries which contain the parent/reagent, names[1]    
+        if prestiges[combo] and fuzz.partial_ratio(names[0], prestiges[combo]) > search_threshold: #names[0] is the child/product here. This yields a list of all recipes making the child/product
+            result.append("%s = %s"%(([combo.split('_')][0]),prestiges[combo])) #entries in result will be the full combination
+    result = [x.title() for x in result if fuzz.partial_ratio(names[1],x) > search_threshold]#Take only entries which contain the parent/reagent, names[1]    
     if not result:#If no entries contained the prevoius parent/reagent, names[1]...
         for combo in prestiges:#try it the other way around with names[1] as the child/product
-            if fuzz.partial_ratio(names[1], prestiges[combo]) > search_threshold: #names[1] is the child here
-                result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo]))
-        result = [x for x in result if fuzz.partial_ratio(names[0],x) > search_threshold]#Take only entries which contain the parent/reagent, names[0]
+            if prestiges[combo] and fuzz.partial_ratio(names[1], prestiges[combo]) > search_threshold: #names[1] is the child here
+                result.append("%s = %s"%(([combo.split('_')][0]), prestiges[combo]))
+        result = [x.title() for x in result if fuzz.partial_ratio(names[0],x) > search_threshold]#Take only entries which contain the parent/reagent, names[0]
         if not result:
             await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title())+source_check)
             return
         else:
-            phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet"
+            phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
             while len(phrase) > 1950:
                 await bot.say(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
             await bot.say(phrase)
             return
     else:
-        phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy\nAdditionally, fuzzy searching is imperfect, so double check your results with ?prestige or with the spreadsheet"
+        phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
         while len(phrase) > 1950:
                 await bot.say(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
@@ -212,7 +212,7 @@ async def namelist(request : str=''):
     elif request.lower()=='epic' or request.lower()=='epics':
         await bot.say('The following is a list of all known names of Epic Crew. I will likely only understand names that are typed as follows:')
         await bot.say(epics)
-    elif request.lower()=='unique' or request.lower()=='uniqes':
+    elif request.lower()=='unique' or request.lower()=='uniques':
         await bot.say('The following is a list of all known names of "Unique" Crew. I will likely only understand names that are typed as follows:')
         await bot.say(uniques)
     else:
@@ -224,22 +224,20 @@ async def prestige(*,request : str):
     if ',' in request:
         names = request.lower().split(',')
     else: #If there's only one name, this tree will handle it. It will try to give all receipes for the one crew member
-        if process.extractOne(request, sub_hero+sub_epic+sub_unique, scorer=fuzz.partial_ratio)[1] > search_threshold:
-            crew = process.extractOne(request, sub_hero+sub_epic+sub_unique, scorer=fuzz.partial_ratio)[0]
-        else:
-            await bot.say("Unrecognized or the crew is not hero, epic, or unique")
-            return
-        if crew in sub_hero: #blocks beneath will return the list which has the target in the 0th position, a column or row in the spreadsheet
-            result = sorted(set([x for x in hero if x[0]==crew][0][1:]))
-        elif crew in sub_epic: 
-            result = sorted(set([x for x in epic if x[0]==crew][0][1:]))
-        elif crew in sub_unique: 
-            result = sorted(set([x for x in unique if x[0]==crew][0][1:]))
-        if result==set():
-            await bot.say("There are no known recipes including %s"%crew+source_check)
+        result = []
+        for combo in prestiges:
+            if prestiges[combo] and process.extractOne(request.lower(),combo.lower().split('_'),scorer = fuzz.partial_ratio)[1] > search_threshold:
+                result.append("%s = %s"%(([combo.title().split('_')][0]),prestiges[combo].title()))                          
+        if not result:
+            legendary_check = process.extractOne(request, legendaries, scorer = fuzz.partial_ratio)
+            if legendary_check[1] > search_threshold:
+                await bot.say("%s was parsed as %s which is a legendary crew. Currently, legendary is the highest tier of crew, and there are no combinations which use legendary crew."%(request,legendary_check[0]))
+                return
+            await bot.say("Either I don't understand, or there are no known recipes including %s"%request+source_check)
             return
         else:
-            phrase = "%s was parsed to mean \"%s\" who is listed as being used in:"%(request,crew)+lined_string(result)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
+            short = sorted(set([x for x in hero+epic+unique if x[0] and fuzz.partial_ratio(request.lower(), x[0].lower()) > search_threshold][0][1:])) #will return the list which has the target in the 0th position, a column or row in the spreadsheet
+            phrase = "%s is listed as being used in:"%(request)+lined_string(short)+"\nFull recipes are as follows:\n"+lined_string(sorted(set([x.title() for x in result])))+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
             while len(phrase) > 1950:
                 await bot.say(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
@@ -291,7 +289,16 @@ async def stats(*,request : str):
         await bot.say("%s's %s is: %s"%(request[0].title(), request[1], getattr(crew[request[0]],request[1])))
         if request[1].lower=='equip' or request[1].lower()=='equipment':
             await bot.say("```%s```"%(equipment_loadouts[int(getattr(crew[request[0]],request[1]))]))
+            return
     except:
-        await bot.say("I don't understand something. Try ```?stats names``` to correct spelling")
+        pass
+    crew0 = process.extractOne(request[0], crew.keys(), scorer = fuzz.partial_ratio)
+    crew1 = process.extractOne(request[1], crew.keys(), scorer = fuzz.partial_ratio)
+    if crew0[1] > search_threshold and crew1[1] > search_threshold:
+        crew0 = crew0[0]
+        crew1 = crew1[0]
+        phrase = "%s and %s were parsed as %s and %s\nAs compared to %s, %s has\n"%(request[0],request[1],crew0,crew1,crew1,crew0)+"```%s - %s\nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nSpecial Type: %s \nSpecial: %s \nTraining : %s \nEquipment: %s```"%(crew0.title(),crew1.title(),crew[crew0].hp-crew[crew1].hp, crew[crew0].pilot-crew[crew1].pilot, round(crew[crew0].attack-crew[crew1].attack,4), round(crew[crew0].fire_resistance-crew[crew1].fire_resistance,5), round(crew[crew0].repair-crew[crew1].repair,4), crew[crew0].weapon-crew[crew1].weapon, crew[crew0].shield-crew[crew1].shield, crew[crew0].engine-crew[crew1].engine, crew[crew0].research-crew[crew1].research, crew[crew0].walking_speed-crew[crew1].walking_speed, crew[crew0].running_speed-crew[crew1].running_speed, str(crew[crew0].special_type)+" vs. "+str(crew[crew1].special_type), str(crew[crew0].special)+" vs. "+str(crew[crew1].special), crew[crew0].training-crew[crew1].training, equipment_loadouts[int(crew[crew0].equipment)]+" vs. "+equipment_loadouts[int(crew[crew1].equipment)])
+        await bot.say(phrase)
+        return
   
 bot.run('Mjc0NDU1NTg5NTY2ODA4MDc2.C2yWMw.uFEcuSxiZRJPp-UkloTvWV0z84Q')
