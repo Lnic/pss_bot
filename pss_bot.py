@@ -9,7 +9,7 @@ from fuzzywuzzy import process
 import Levenshtein
 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -100,7 +100,8 @@ def all_crew_values(source):
             break
         
 #pss_api=open("ListAllCharacterDesigns2.txt","r+").read() #If ever I need to switch to offline character data
-with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response:
+#with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response:
+with urllib.request.urlopen(r'https://api.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response: #This is the newer url, apparently
     pss_api = response.read()
 pss_api = pss_api.decode("utf-8")
 all_crew_values(pss_api)
@@ -108,13 +109,13 @@ all_crew_values(pss_api)
 def lined_string(text):
     return "```\n"+"%s\n"*len(text)%tuple(text)+"```\n"
 
-source_check = "\nFeel free to check my source at"+r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900 and report any errors to @DT-1236#0629"
+source_check = "\nFeel free to check my prestige source. URL can be requested with ?spreadsheet. Please report any errors with the bot to Phoenix's @DT-1236#0629 and direct updates to the prestige spreadsheet to Prestige Worldwide's @superjew#6070"
 
 print ('Crew data prep complete. Time Elapsed :'+str(time.clock()-time_start))
 
 #######
 
-description = """A bot designed to relay known information regarding Pixel Starships."""
+description = """A bot designed to relay known information regarding Pixel Starships. Message Phoenix's @DT-1236#0629 if there are any problems with the bot. Updates to crew prestige information should be directed to Prestige Worldwide's @superjew#6070"""
 
 bot = commands.Bot(command_prefix='?', description=description)
 
@@ -126,28 +127,36 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     print ('Full prep complete. Time Elapsed :'+str(time.clock()-time_start))
-    await bot.change_presence(game=discord.Game(name='Try ?commandlist'))
- 
+#    await bot.change_presence(game=discord.Game(name='Try ?commandlist'))
+#change presence will have to wait until it's reconfigured for rewrite
+
 @bot.command(aliases=["CommandList", "Commandlist", "Command List", "command list", "commands", "Commands", "command", "Command"])
-async def commandlist(*, request : str=None):
+async def commandlist(ctx,*, request : str=None):
     request = process.extractOne(request, ['prestige','names','recipe','stats'])[0]
     try:
         if request=="prestige":
-            await bot.say("Input: 1 crew name or 2 crew names separated by a comma. Gives result of crew prestige if known. Gives known possibilities for prestige if only 1 name is given")
+            await ctx.send("Input: 1 crew name or 2 crew names separated by a comma. Gives result of crew prestige if known. Gives known possibilities for prestige if only 1 name is given")
         elif request=="names":
-            await bot.say("Gives acceptable spelling for Hero, Epic, or Unique crew")
+            await ctx.send("Gives acceptable spelling for Hero, Epic, or Unique crew")
         elif request=="recipe":
-            await bot.say("Gives known combinations which result in the given name. If 1 parent and 1 child are given, a list of other parents will be given which can produce the desired child.")
+            await ctx.send("Gives known combinations which result in the given name. If 1 parent and 1 child are given, a list of other parents will be given which can produce the desired child.")
         elif request=="stats":
-            await bot.say("Gives requested stats for listed crew member. Use ?stats help for more information")
+            await ctx.send("Gives requested stats for listed crew member. Use ?stats help for more information")
     except:
-        await bot.say("Try ?command with prestige, recipes, stats, or namelist")
+        await ctx.send("Try ?command with prestige, recipes, stats, or namelist")
+
+@bot.command(aliases=["Spreadsheet", "spread", "Spread"])
+async def spreadsheet(ctx,*,request : str=''):
+    """Returns the URL for the prestige spreadsheet"""
+    await ctx.send(r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900")
+
+
 
 @bot.command(aliases=["recipes", "Recipe", "Recipes"])
-async def recipe(*,request : str):
+async def recipe(ctx,*,request : str):
     """Gives listed combinations to make single crew OR gives listed combinations including component crew member to make result crew member"""
     if request.lower()=='help' or request.lower()=='names':
-        await bot.say("Names for prestige results are: "+lined_string(all_prestige_results)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update")
+        await ctx.send("Names for prestige results are: "+lined_string(all_prestige_results)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update")
         return
     if ',' in request:
         names = request.lower().split(',')
@@ -161,16 +170,16 @@ async def recipe(*,request : str):
         if result==[]:
             unique_check = process.extractOne(request, uniques, scorer = fuzz.partial_ratio)
             if unique_check[1] > search_threshold:
-                await bot.say("%s was parsed as %s which is a unique. Since uniques are obtainable through mineral draws, prestige recipes including elite crew are not recorded."%(request,unique_check[0]))
+                await ctx.send("%s was parsed as %s which is a unique. Since uniques are obtainable through mineral draws, prestige recipes including elite crew are not recorded."%(request,unique_check[0]))
                 return
-            await bot.say("There are no recorded recipes for %s"%(request.title())+source_check)
+            await ctx.send("There are no recorded recipes for %s"%(request.title())+source_check)
             return
         else:
             phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
             while len(phrase) > 1950:
-                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                await ctx.send(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
-            await bot.say(phrase)
+            await ctx.send(phrase)
             return
     result=[]
     for combo in prestiges:#This tree will handle prospective parent/child combinations
@@ -183,43 +192,43 @@ async def recipe(*,request : str):
                 result.append("%s = %s"%(([combo.split('_')][0]), prestiges[combo]))
         result = [x.title() for x in result if fuzz.partial_ratio(names[0],x) > search_threshold]#Take only entries which contain the parent/reagent, names[0]
         if not result:
-            await bot.say("I see no relation between %s and %s"%(names[0].title(),names[1].title())+source_check)
+            await ctx.send("I see no relation between %s and %s"%(names[0].title(),names[1].title())+source_check)
             return
         else:
             phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
             while len(phrase) > 1950:
-                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                await ctx.send(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
-            await bot.say(phrase)
+            await ctx.send(phrase)
             return
     else:
         phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
         while len(phrase) > 1950:
-                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                await ctx.send(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
-        await bot.say(phrase)
+        await ctx.send(phrase)
         return
     
 @bot.command(aliases=["names"])
-async def namelist(request : str=''):
+async def namelist(ctx,request : str=''):
     """returns a list of valid names"""
     if request.lower()=='legendary' or request.lower()=='legendaries' or request.lower()=='legend':
-        await bot.say('The following is a list of all known names of Legendary Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(legendaries)
+        await ctx.send('The following is a list of all known names of Legendary Crew. I will likely only understand names that are typed as follows:')
+        await ctx.send(legendaries)
     elif request.lower()=='hero' or request.lower()=='heroes':
-        await bot.say('The following is a list of all known names of Hero Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(heroes)
+        await ctx.send('The following is a list of all known names of Hero Crew. I will likely only understand names that are typed as follows:')
+        await ctx.send(heroes)
     elif request.lower()=='epic' or request.lower()=='epics':
-        await bot.say('The following is a list of all known names of Epic Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(epics)
+        await ctx.send('The following is a list of all known names of Epic Crew. I will likely only understand names that are typed as follows:')
+        await ctx.send(epics)
     elif request.lower()=='unique' or request.lower()=='uniques':
-        await bot.say('The following is a list of all known names of "Unique" Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(uniques)
+        await ctx.send('The following is a list of all known names of "Unique" Crew. I will likely only understand names that are typed as follows:')
+        await ctx.send(uniques)
     else:
-        await bot.say('Valid inputs include hero, epic, or unique')
+        await ctx.send('Valid inputs include hero, epic, or unique')
 
 @bot.command(aliases=["Prestige"])
-async def prestige(*,request : str):
+async def prestige(ctx,*,request : str):
     """Returns data on prestige results for the two crew members entered as input"""
     if ',' in request:
         names = request.lower().split(',')
@@ -231,17 +240,17 @@ async def prestige(*,request : str):
         if not result:
             legendary_check = process.extractOne(request, legendaries, scorer = fuzz.partial_ratio)
             if legendary_check[1] > search_threshold:
-                await bot.say("%s was parsed as %s which is a legendary crew. Currently, legendary is the highest tier of crew, and there are no combinations which use legendary crew."%(request,legendary_check[0]))
+                await ctx.send("%s was parsed as %s which is a legendary crew. Currently, legendary is the highest tier of crew, and there are no combinations which use legendary crew."%(request,legendary_check[0]))
                 return
-            await bot.say("Either I don't understand, or there are no known recipes including %s"%request+source_check)
+            await ctx.send("Either I don't understand, or there are no known recipes including %s"%request+source_check)
             return
         else:
             short = sorted(set([x for x in hero+epic+unique if x[0] and fuzz.partial_ratio(request.lower(), x[0].lower()) > search_threshold][0][1:])) #will return the list which has the target in the 0th position, a column or row in the spreadsheet
             phrase = "%s is listed as being used in:"%(request)+lined_string(short)+"\nFull recipes are as follows:\n"+lined_string(sorted(set([x.title() for x in result])))+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
             while len(phrase) > 1950:
-                await bot.say(phrase[:phrase.find('[',1800)]+"```")
+                await ctx.send(phrase[:phrase.find('[',1800)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1800):]
-            await bot.say(phrase)
+            await ctx.send(phrase)
             return
     key_1 = process.extractOne(request,prestiges.keys(),scorer=fuzz.partial_ratio)[0]
     if prestiges[key_1]:
@@ -254,41 +263,41 @@ async def prestige(*,request : str):
     else:
         result_2 = "Unlisted"
     phrase = "%s was parsed as %s which yields:```\n%s```\n%s yields:\n```\n%s```"%(request,key_1,result_1,key_2,result_2)+"** = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
-    await bot.say(phrase)
+    await ctx.send(phrase)
 
 @bot.command(aliases=["Stats", 'stat', 'Stat'])
-async def stats(*,request : str):
+async def stats(ctx,*,request : str):
     """Provides stat readouts for requested crew"""
     initial_request = request
     if request.lower()=='help':
-        await bot.say("Give a crew name or a crew name and a stat separated by a comma. All stats will be given if no specific stat is provided. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, running_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
+        await ctx.send("Give a crew name or a crew name and a stat separated by a comma. All stats will be given if no specific stat is provided. Valid names can be found with ?stat names. Valid stats are ```gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking_speed, running_speed, rarity, progression, xp, special_type, special, training, and equipment.```")
         return
     if request.lower()=='equip' or request.lower()=='equipment':
-        await bot.say("```%s```"%(equipment_loadouts))
+        await ctx.send("```%s```"%(equipment_loadouts))
         return
     if request.lower()=='names':
-        await bot.say("Valid names are: ```%s```"%(crew.keys()))
+        await ctx.send("Valid names are: ```%s```"%(crew.keys()))
         return
     if ',' in request:
         request = request.lower().split(',')
     else:
         request = process.extractOne(request,crew.keys(),scorer=fuzz.partial_ratio)[0]
         phrase = "%s was parsed as %s\n"%(initial_request,request.title())+"```Name: %s \nGender: %s\nRace: %s \nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nRarity: %s \nProgression: %s \nXP: %s \nSpecial Type: %s \nSpecial: %s \nTraining: %s \nEquipment: %s - %s```"%(getattr(crew[request],metrics[0]).title(),getattr(crew[request],metrics[1]),getattr(crew[request],metrics[2]),getattr(crew[request],metrics[3]),getattr(crew[request],metrics[4]),getattr(crew[request],metrics[5]),getattr(crew[request],metrics[6]),getattr(crew[request],metrics[7]),getattr(crew[request],metrics[8]),getattr(crew[request],metrics[9]),getattr(crew[request],metrics[10]),getattr(crew[request],metrics[11]),getattr(crew[request],metrics[12]),getattr(crew[request],metrics[13]),getattr(crew[request],metrics[14]),getattr(crew[request],metrics[15]),getattr(crew[request],metrics[16]),getattr(crew[request],metrics[17]),getattr(crew[request],metrics[18]),getattr(crew[request],metrics[19]),getattr(crew[request],metrics[20]),equipment_loadouts[int(getattr(crew[request],metrics[20]))])
-        await bot.say(phrase)
+        await ctx.send(phrase)
         return
     if request[1][0] == ' ':
         request[1] = request[1][1:]
     if request[0].lower()=='equip' or request[0].lower()=='equipment':
         try:
-            await bot.say("Loadout %s is for ```%s```"%(request[1],equipment_loadouts[int(request[1])]))
+            await ctx.send("Loadout %s is for ```%s```"%(request[1],equipment_loadouts[int(request[1])]))
             return
         except:
-            await bot.say("I don't know how you got here")
+            await ctx.send("I don't know how you got here")
             return
     try:
-        await bot.say("%s's %s is: %s"%(request[0].title(), request[1], getattr(crew[request[0]],request[1])))
+        await ctx.send("%s's %s is: %s"%(request[0].title(), request[1], getattr(crew[request[0]],request[1])))
         if request[1].lower=='equip' or request[1].lower()=='equipment':
-            await bot.say("```%s```"%(equipment_loadouts[int(getattr(crew[request[0]],request[1]))]))
+            await ctx.send("```%s```"%(equipment_loadouts[int(getattr(crew[request[0]],request[1]))]))
             return
     except:
         pass
@@ -298,7 +307,7 @@ async def stats(*,request : str):
         crew0 = crew0[0]
         crew1 = crew1[0]
         phrase = "%s and %s were parsed as %s and %s\nAs compared to %s, %s has\n"%(request[0],request[1],crew0,crew1,crew1,crew0)+"```%s - %s\nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nSpecial Type: %s \nSpecial: %s \nTraining : %s \nEquipment: %s```"%(crew0.title(),crew1.title(),crew[crew0].hp-crew[crew1].hp, crew[crew0].pilot-crew[crew1].pilot, round(crew[crew0].attack-crew[crew1].attack,4), round(crew[crew0].fire_resistance-crew[crew1].fire_resistance,5), round(crew[crew0].repair-crew[crew1].repair,4), crew[crew0].weapon-crew[crew1].weapon, crew[crew0].shield-crew[crew1].shield, crew[crew0].engine-crew[crew1].engine, crew[crew0].research-crew[crew1].research, crew[crew0].walking_speed-crew[crew1].walking_speed, crew[crew0].running_speed-crew[crew1].running_speed, str(crew[crew0].special_type)+" vs. "+str(crew[crew1].special_type), str(crew[crew0].special)+" vs. "+str(crew[crew1].special), crew[crew0].training-crew[crew1].training, equipment_loadouts[int(crew[crew0].equipment)]+" vs. "+equipment_loadouts[int(crew[crew1].equipment)])
-        await bot.say(phrase)
+        await ctx.send(phrase)
         return
   
 bot.run('Mjc0NDU1NTg5NTY2ODA4MDc2.C2yWMw.uFEcuSxiZRJPp-UkloTvWV0z84Q')
