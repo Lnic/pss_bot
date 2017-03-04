@@ -1,0 +1,4 @@
+
+http://api.pixelstarships.com/ItemService/ListItemDesigns2
+
+http://api.pixelstarships.com/ItemService/ListItemDesigns2?languageKey=en

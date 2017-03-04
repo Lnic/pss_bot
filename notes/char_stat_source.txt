@@ -1,0 +1,3 @@
+(old) http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en
+
+(new) https://api.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en
