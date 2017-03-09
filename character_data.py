@@ -5,6 +5,9 @@ def finder(target, source):
     return source[source.find(target)+len(target)+1:source.find('"',source.find(target)+len(target)+2)]
 
 class Crew:
+
+    stratification = {'genders':{}, 'races': {}, 'rarities':{}, 'progressions':{}, 'special_types':{}}
+
     def __init__(self, source, name):
         '''Crew from Pixel Starships'''
         #self.name = finder("CharacterDesignName=",source)
@@ -43,6 +46,26 @@ class Crew:
                     self.stats_equip[stat][1] += " + " + equipment_data.max_augment[slot][stat][1]
                     self.stats_equip[stat][0] = round(self.stats_equip[stat][0], 5)
         self.stats_equip["Ability"][0] = round((1+(self.stats_equip["Ability"][0]*.01))*self.special, 5)
+        if self.race not in Crew.stratification['races']:
+            Crew.stratification['races'][self.race] = [self.name]
+        else:
+            Crew.stratification['races'][self.race].append(self.name)
+        if self.gender not in Crew.stratification['genders']:
+            Crew.stratification['genders'][self.gender] = [self.name]
+        else:
+            Crew.stratification['genders'][self.gender].append(self.name)
+        if self.rarity not in Crew.stratification['rarities']:
+            Crew.stratification['rarities'][self.rarity] = [self.name]
+        else:
+            Crew.stratification['rarities'][self.rarity].append(self.name)
+        if self.special_type not in Crew.stratification['special_types']:
+            Crew.stratification['special_types'][self.special_type] = [self.name]
+        else:
+            Crew.stratification['special_types'][self.special_type].append(self.name)
+        if self.progression not in Crew.stratification['progressions']:
+            Crew.stratification['progressions'][self.progression] = [self.name]
+        else:
+            Crew.stratification['progressions'][self.progression].append(self.name)
 
 crew={}
 metrics=['name','gender','race','hp','pilot','attack','fire_resistance','repair','weapon','shield','engine','research','walking_speed','running_speed','rarity','progression','xp','special_type','special','training','equipment']
