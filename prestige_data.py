@@ -40,6 +40,7 @@ add_to_prestiges(epics,epic)
 add_to_prestiges(uniques,unique)
 all_prestige_results = sorted(set([prestiges[combo] for combo in prestiges]))
 all_names = sub_hero+sub_epic+sub_unique+legendaries
+no_prestige_types = ["Common", "Elite", "Special", "Legendary"]
 
 def lined_string(text):
     return "```\n"+"%s\n"*len(text)%tuple(text)+"```"
