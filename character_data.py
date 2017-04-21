@@ -83,8 +83,8 @@ def all_crew_values(source):
             break
 
 #pss_api=open("ListAllCharacterDesigns2.txt","r+").read() #If ever I need to switch to offline character data
-#with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response:
-with urllib.request.urlopen(r'https://api.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response: #This is the newer url, apparently
+with urllib.request.urlopen(r'http://api2.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response: #I needed to switch back to the 'older' one
+#with urllib.request.urlopen(r'https://api.pixelstarships.com/CharacterService/ListAllCharacterDesigns2?languageKey=en') as response: #This is the newer url, apparently
     pss_api = response.read()
 pss_api = pss_api.decode("utf-8")
 all_crew_values(pss_api)

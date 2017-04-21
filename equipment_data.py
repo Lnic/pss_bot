@@ -41,7 +41,7 @@ while source.find("ItemDesign ", 1) > 0: #This block will create all crew equipm
         Equipment.equipment[source[name_start:source.find('"', name_start)]] = Equipment(source) #Make an entry in the equipment dictionary for self
 
 max_augment = {"EquipmentHead":{"Repair":[], "Attack":[], "Pilot":[], "FireResistance":[], "Hp":[], "Stamina":[], "Ability":[], "Shield":[], "Weapon":[]}, "EquipmentBody":{"Repair":[], "Attack":[], "Pilot":[], "FireResistance":[], "Hp":[], "Stamina":[], "Ability":[], "Shield":[], "Weapon":[]}, "EquipmentLeg":{"Repair":[], "Attack":[], "Pilot":[], "FireResistance":[], "Hp":[], "Stamina":[], "Ability":[], "Shield":[], "Weapon":[]}, "EquipmentWeapon":{"Repair":[], "Attack":[], "Pilot":[], "FireResistance":[], "Hp":[], "Stamina":[], "Ability":[], "Shield":[], "Weapon":[]}, "EquipmentAccessory":{"Repair":[], "Attack":[], "Pilot":[], "FireResistance":[], "Hp":[], "Stamina":[], "Ability":[], "Shield":[], "Weapon":[]}}
-#The above dictionary has entries for each equipment slot in the top  level
+#The above dictionary has entries for each equipment slot in the top level
 #Each of those then has another slot for each parameter augment type
 #The goal will be to have one entry for each, the max level entry
 
@@ -52,4 +52,4 @@ for slot in max_augment:
             continue #next line will give .value associated with the equipment
         values = [Equipment.equipment[x].value for x in entry]
         zipped = zip(values, entry)
-        max_augment[slot][stat] = sorted(zipped)[-1]
+        max_augment[slot][stat] = sorted(zipped, key=lambda x:float(x[0]))[-1]
