@@ -54,11 +54,7 @@ async def spreadsheet(ctx,*,request : str=''):
 async def recipe(ctx,*,request : str):
     """: 1 crew => Combinations which create that crew ; 1 result, 1 reagent => Combinations which use reagent for result"""
     if request.lower()=='help' or request.lower()=='names':
-<<<<<<< HEAD
         await ctx.send("Names for prestige results are: "+lined_string(prestige_data.all_prestige_results)+"\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update\nFor combinations which use the input crew, try ?prestige instead")
-=======
-        await ctx.send("Names for prestige results are: "+lined_string(prestige_data.all_prestige_results)+"\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update")
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
         return
     if ',' in request:
         names = request.lower().split(',')
@@ -82,11 +78,7 @@ async def recipe(ctx,*,request : str):
             await ctx.send("There are no recorded recipes for %s"%(request.title())+source_check+"\nFor combinations which use the input crew, try ?prestige instead")
             return
         else:
-<<<<<<< HEAD
             phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet listed in ?spreadsheet"+"\n\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update\nFor combinations which use the input crew, try ?prestige instead"
-=======
-            phrase = "These combinations are listed as potentially making %s:"%request.title()+lined_string(result)+"\nConsider double checking your chosen recipe with ?prestige or the spreadsheet"+"\n\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
             while len(phrase) > 1950:
                 await ctx.send(phrase[:phrase.find('[',1600)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1600):]
@@ -106,22 +98,14 @@ async def recipe(ctx,*,request : str):
             await ctx.send("I see no relation between %s and %s"%(names[0].title(),names[1].title())+source_check+"\nFor combinations which use the input crew, try ?prestige instead")
             return
         else:
-<<<<<<< HEAD
             phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update\nFor combinations which use the input crew, try ?prestige instead"
-=======
-            phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
             while len(phrase) > 1950:
                 await ctx.send(phrase[:phrase.find('[',1600)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1600):]
             await ctx.send(phrase)
             return
     else:
-<<<<<<< HEAD
         phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update\nFor combinations which use the input crew, try ?prestige instead"
-=======
-        phrase = "According to records, pertinent combinations between %s and %s are as follows:"%(names[0].title(),names[1].title())+lined_string(sorted(set([x.title() for x in result])))+"Remember, only Legendary combinations are guaranteed by Savy"+"\n\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
         while len(phrase) > 1950:
                 await ctx.send(phrase[:phrase.find('[',1600)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1600):]
@@ -162,16 +146,11 @@ async def prestige(ctx,*,request : str):
             if prestige_data.prestiges[combo] and process.extractOne(request.lower(),combo.lower().split('_'),scorer = sim_check_scorer)[1] > prestige_data.search_threshold:
                 result.append("%s = %s"%(([combo.title().split('_')][0]),prestige_data.prestiges[combo].title()))
         if not result: #This is for inputs with no recipes
-<<<<<<< HEAD
             type_check = process.extractOne(request, character_data.crew.keys(), scorer = sim_check_scorer)
-=======
-            type_check = process.extractOne(request, character_data.crew.keys(), scorer = fuzz.partial_ratio)
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
             if type_check[1] > search_threshold:
                 type_result = character_data.crew[type_check[0]].rarity
                 if type_result in prestige_data.no_prestige_types:
                     if type_result == "Special":
-<<<<<<< HEAD
                         phrase = "%s was parsed as **%s** which is %s type crew. Special crew cannot currently be made or used for prestige."%(request, type_check[0].title(), type_result)+"\nFor combinations to create the input crew, try ?recipe instead"
                         await ctx.send(phrase)
                         return
@@ -184,20 +163,6 @@ async def prestige(ctx,*,request : str):
                         await ctx.send(phrase)
                         return                
                 await ctx.send("%s was parsed as **%s**. There are no known recipes including %s"%(request, type_check[0], type_check[0].title())+source_check+"\nFor combinations to create the input crew, try ?recipe instead")
-=======
-                        phrase = "%s was parsed as **%s** which is %s type crew. Special crew cannot currently be made or used for prestige."%(request, type_check[0].title(), type_result)
-                        await ctx.send(phrase)
-                        return
-                    if type_result == "Legendary":
-                        phrase = "%s was parsed as **%s** which is %s type crew. Legendary is the highest tier of crew - therefore there are no combinations which use Legendary crew."%(request, type_check[0].title(), type_result)
-                        await ctx.send(phrase)
-                        return
-                    if type_result == "Common" or type_result == "Elite":
-                        phrase = "%s was parsed as **%s** which is %s type crew. Common and Elite crew combinations are not recorded."%(request, type_check[0].title(), type_result)
-                        await ctx.send(phrase)
-                        return                
-                await ctx.send("%s was parsed as **%s**. There are no known recipes including %s"%(request, type_check[0], type_check[0].title())+source_check)
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
                 return
             await ctx.send("Input not quite recognized. The closest entry is ```\n%s``` If this is correct, try again with this spelling."%type_check[0].title())
             return
@@ -205,11 +170,7 @@ async def prestige(ctx,*,request : str):
             short = sorted(set([x for x in prestige_data.hero+prestige_data.epic+prestige_data.unique if x[0] and fuzz.partial_ratio(request.lower(), x[0].lower()) > prestige_data.search_threshold][0][1:])) #will return the list which has the target in the 0th position, a column or row in the spreadsheet
             phrase = "%s is listed as being used in:"%(request)+lined_string(short)
             await ctx.send(phrase)
-<<<<<<< HEAD
             phrase = ("Full recipes are as follows:\n"+lined_string(sorted(set([x.title() for x in result])))+"\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update"+"\nFor combinations to create the input crew, try ?recipe instead")
-=======
-            phrase = ("Full recipes are as follows:\n"+lined_string(sorted(set([x.title() for x in result])))+"\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update")
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
             while len(phrase) > 1950:
                 await ctx.send(phrase[:phrase.find('[',1750)]+"```")
                 phrase = "```"+phrase[phrase.find('[',1750):]
@@ -227,11 +188,7 @@ async def prestige(ctx,*,request : str):
         result_2 = "Unlisted"
     phrase = "%s was parsed as %s which yields:```\n%s```"%(request, key_1, result_1)
     await ctx.send(phrase)
-<<<<<<< HEAD
     phrase = "%s yields:\n```\n%s```"%(key_2,result_2)+"\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update"+"\nFor combinations to create the input crew, try ?recipe instead"
-=======
-    phrase = "%s yields:\n```\n%s```"%(key_2,result_2)+"\*\* = confirmed since December update\n# = rumored\nunmarked = NOT confirmed since December update"
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
     await ctx.send(phrase)
 
 @bot.command(aliases=["Stats", 'stat', 'Stat'])
@@ -356,12 +313,8 @@ async def equipment(ctx,*,request : str):
     
 @bot.command(aliases=["Crews", 'Crew', 'crews'])
 async def crew(ctx,*,request : str):
-<<<<<<< HEAD
     """: try ?crew help
         example: ```?crew race = white, rarity = hero```"""
-=======
-    """Returns crew which satisfy all parameters"""
->>>>>>> 592b5ef791ff9f01d2802b1ff6c33968b832969f
     if '=' in request:
         request = request.split(',')
         result = list(character_data.crew.keys())
