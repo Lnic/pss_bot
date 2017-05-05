@@ -1,7 +1,5 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-#from fuzzywuzzy import fuzz
-#from fuzzywuzzy import process
 
 search_threshold = 74
 
