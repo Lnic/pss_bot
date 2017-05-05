@@ -1,7 +1,7 @@
 import urllib.request
 
-with urllib.request.urlopen(r'http://api.pixelstarships.com/ItemService/ListItemDesigns2?languageKey=en') as response: #This is the newer url, apparently
-    source = response.read()
+source =urllib.request.urlopen(r'http://api.pixelstarships.com/ItemService/ListItemDesigns2?languageKey=en').read()
+#source =urllib.request.urlopen(r'http://api2.pixelstarships.com/ItemService/ListItemDesigns2?languageKey=en').read() #For when they switch to api2
 source = source.decode("utf-8")
 
 class Equipment:
@@ -25,9 +25,6 @@ class Equipment:
         stats = {"Repair":0, "Attack":0, "Pilot":0, "FireResistance":0, "Hp":0, "Stamina":0, "Ability":0, "Shield":0, "Weapon":0}
         stats[self.parameter_type] = self.value #update the stat dicationary with the proper value
 
-#source = open(r"item testing.txt", "r")
-#source = source.read()
-
 while source.find("ItemDesign ", 1) > 0: #This block will create all crew equipment entries
     source = source[source.find("ItemDesign ", 1):]
     type_start = source.find("ItemType")
@@ -49,7 +46,7 @@ for slot in max_augment:
     for stat in max_augment[slot]: #List comprehension below will give equipment of a slot and stat type
         entry = [x for x in Equipment.equipment if x in Equipment.equipment_types[slot] and x in Equipment.stat_types[stat]]
         if not entry:
-            continue #next line will give .value associated with the equipment
+            continue #next line will give value associated with the equipment
         values = [Equipment.equipment[x].value for x in entry]
         zipped = zip(values, entry)
         max_augment[slot][stat] = sorted(zipped, key=lambda x:float(x[0]))[-1]
