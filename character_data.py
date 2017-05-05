@@ -6,7 +6,7 @@ def finder(target, source):
 
 class Crew:
 
-    stratification = {'genders':{}, 'races': {}, 'rarities':{}, 'progressions':{}, 'special_types':{}}
+    stratification = {'genders':{}, 'races': {}, 'rarities':{}, 'progressions':{}, 'special_types':{}, 'equipment':{}}
 
     def __init__(self, source, name):
         '''Crew from Pixel Starships'''
@@ -38,14 +38,14 @@ class Crew:
             self.slots = equipment_loadouts[int(self.equipment)].split(' and ')
             for entry in range(len(self.slots)):
                 self.slots[entry] = 'Equipment'+self.slots[entry]
-        self.stats_equip = {"Repair":[self.repair, ''], "Attack":[self.attack*1.5, '+ 50% Training'], "Pilot":[self.pilot, ''], "FireResistance":[self.fire_resistance , ''], "Hp":[self.hp*1.5, '+ 50% Training'], "Stamina":[50, '+ 50 Training'], "Ability":[50, '+ 50% Training'], "Shield":[self.shield, ''], "Weapon":[self.weapon, '']}
-        for slot in self.slots: #Training values are assumed to be 50. Ability will need to be divided by 100 and then multiplied by self.special
-            for stat in equipment_data.max_augment[slot]: #Individual stats
-                if equipment_data.max_augment[slot][stat]: #If something's there, add it
+        self.stats_equip = {"Repair":[self.repair, ''], "Attack":[self.attack*1.5, '+ 50% Training'], "Pilot":[self.pilot, ''], "FireResistance":[self.fire_resistance, ''], "Hp":[self.hp*1.5, '+ 50% Training'], "Stamina":[50, '+ 50 Training'], "Ability":[0, '+ 50% Training'], "Shield":[self.shield, ''], "Weapon":[self.weapon, '']}
+        for slot in self.slots: #Training values are assumed to be 50. Ability will need to be divided by 100 and then multiplied by self.special*training
+            for stat in equipment_data.max_augment[slot]: #Individual stats of top tier item
+                if equipment_data.max_augment[slot][stat]: #If the crew can equip it, the stat will be added
                     self.stats_equip[stat][0] += float(equipment_data.max_augment[slot][stat][0])
                     self.stats_equip[stat][1] += " + " + equipment_data.max_augment[slot][stat][1]
                     self.stats_equip[stat][0] = round(self.stats_equip[stat][0], 5)
-        self.stats_equip["Ability"][0] = round((1+(self.stats_equip["Ability"][0]*.01))*self.special, 5)
+        self.stats_equip["Ability"][0] = round((1+(self.stats_equip["Ability"][0]*.01))*self.special*1.5, 5)
         if self.race not in Crew.stratification['races']:
             Crew.stratification['races'][self.race] = [self.name]
         else:
@@ -66,6 +66,10 @@ class Crew:
             Crew.stratification['progressions'][self.progression] = [self.name]
         else:
             Crew.stratification['progressions'][self.progression].append(self.name)
+        if equipment_loadouts[int(self.equipment)] not in Crew.stratification['equipment']:
+            Crew.stratification['equipment'][equipment_loadouts[int(self.equipment)]] = [self.name]
+        else:
+            Crew.stratification['equipment'][equipment_loadouts[int(self.equipment)]].append(self.name)
 
 crew={}
 metrics=['name','gender','race','hp','pilot','attack','fire_resistance','repair','weapon','shield','engine','research','walking_speed','running_speed','rarity','progression','xp','special_type','special','training','equipment']
