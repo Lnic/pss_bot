@@ -1,3 +1,4 @@
+from imp import reload
 import time
 import discord
 from discord.ext import commands
@@ -27,11 +28,11 @@ print ('Crew and equipment data prep complete. Time Elapsed :'+str(time.clock()-
 def lined_string(text):
     return "```\n"+"%s\n"*len(text)%tuple(text)+"```\n"
 
-source_check = "\nFeel free to check my prestige source. URL can be requested with ?spreadsheet. Please report any errors with the bot to Phoenix's @DT-1236#0629 and direct updates to the prestige spreadsheet to Prestige Worldwide's @superjew#6070"
+source_check = "\nFeel free to check my prestige source. URL can be requested with ?spreadsheet. Alternatively, you can force a refresh operation with ```?refresh``` Please report any errors with the bot to Phoenix's @DT-1236#0629 and direct updates to the prestige spreadsheet to Dark Matter Heroes' @Cluny#4079 AND/OR Clan Zaki's @NinjaPleaze#3781"
 
 #######
 
-description = """A bot designed to relay known information regarding Pixel Starships. Message Phoenix's @DT-1236#0629 if there are any problems with the bot. Updates to crew prestige information should be directed to Prestige Worldwide's @superjew#6070"""
+description = """A bot designed to relay known information regarding Pixel Starships. Message Phoenix's @DT-1236#0629 if there are any problems with the bot. Updates to crew prestige information should be directed to Dark Matter Heroes' @Cluny#4079 AND/OR Clan Zaki's @NinjaPleaze#3781"""
 
 bot = commands.Bot(command_prefix=['?', '?\ '], description=description, help_attrs = {'aliases' : ["CommandList", "Commandlist", "Command List", "command list", "commands", "Commands", "command", "Command", "commandlist"]})
 
@@ -316,16 +317,24 @@ async def crew(ctx,*,request : str):
     """: try ?crew help
         example: ```?crew race = white, rarity = hero```"""
     if '=' in request:
-        request = request.split(',')
+        request = request.split(',') #splits parameter=value entries by ','
+        roster = list(character_data.crew.keys())
         result = list(character_data.crew.keys())
         question = []
         for pair in request:
-            pair = pair.split('=', 1)
-            query = process.extractOne(pair[0], character_data.Crew.stratification.keys(), scorer = fuzz.partial_ratio)[0] #returns genders/races/rarities/progression/special_types
-            parameter = process.extractOne(pair[1], character_data.Crew.stratification[query].keys(), scorer = fuzz.partial_ratio)[0]
-            result = [x for x in character_data.Crew.stratification[query][parameter] if x in result]
-            question.append(["%s = %s"%(query, parameter)])
-        phrase = ("Crew which meet parameters:" + lined_string(question))
+            pair = pair.split('=', 1) #parses parameter=value entries with '='
+            parameter = process.extractOne(pair[0], character_data.Crew.stratification.keys(), scorer = fuzz.token_set_ratio)[0] #returns genders/races/rarities/progression/special_types/equipment
+            interim = process.extract(pair[1], character_data.Crew.stratification[parameter].keys(), scorer = fuzz.token_set_ratio)
+            value = [x[0] for x in interim if x[1] == interim[0][1]] #likely just one thing, but may have multiple equipment types
+            passed = []
+            for entry in value:
+                [passed.append(x) for x in character_data.Crew.stratification[parameter][entry] if x not in passed]
+                print(passed)
+            [result.remove(x) for x in roster if x in result and x not in passed]
+            print(len(result))
+            question.append(["%s = %s"%(parameter, value)])
+        print(len(result))
+        phrase = ("Crew with values:" + lined_string(question))
         await ctx.send(phrase)
         phrase = ("Are as follows:" + lined_string(result))
         await ctx.send(phrase)
@@ -349,5 +358,15 @@ async def crew(ctx,*,request : str):
             return
         if fuzz.partial_ratio(request[1], 'special types') > search_threshold:
             await ctx.send("Try ?crew special=(special type). Possible special types include: ```\n%s```"%list(character_data.Crew.stratification['special_types'].keys()))
+        if fuzz.partial_ratio(request[1], 'equipment') > search_threshold:
+            await ctx.send("Try ?Crew equipment=(slots). Possible equipment loadouts include: ```\n%s```"%list(character_data.Crew.stratification['equipment'].keys()))
             
+@bot.command(aliases=["Refresh", 'Reload', 'reload'])
+async def refresh(ctx,*,request : str=''):
+    """Refreshes prestige information"""
+    await ctx.send("Refresh operation attempted. PSS Bot functions will be unavailable for 1-10 minutes.")
+    reload(prestige_data)
+    await ctx.send("Prestige data refreshed")
+    return
+
 bot.run('Mjc0NDU1NTg5NTY2ODA4MDc2.C2yWMw.uFEcuSxiZRJPp-UkloTvWV0z84Q')
