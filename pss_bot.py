@@ -54,7 +54,7 @@ async def on_ready():
 @bot.command(aliases=["Spreadsheet", "spread", "Spread"], category = 'Sources')
 async def spreadsheet():
     """: Returns the URL for the prestige spreadsheet"""
-    await bot.say(r"https://docs.google.com/spreadsheets/d/11ZXN22CTmItPMVduRdpEwf6wR9KRMJR7Ro9HensEWSk/edit#gid=656420900")
+    await bot.say(r"https://docs.google.com/spreadsheets/d/1Sn1yHJVqcN1bJGqhvEitgNSnT2NIS8hSRYqCLAqubKk/edit#gid=1068686197")
 
 
 @bot.command(aliases=["recipes", "Recipe", "Recipes"])
