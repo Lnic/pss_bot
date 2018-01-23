@@ -5,6 +5,7 @@ from discord.ext import commands
 import logging
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+import re
 import Levenshtein
 
 
@@ -156,35 +157,33 @@ async def prestige(*,request : str):
             sim_check_scorer = fuzz.token_sort_ratio
         else:
             sim_check_scorer = fuzz.partial_ratio
+        crew = process.extractOne(request.lower(), character_data.crew.keys(), scorer = sim_check_scorer)
+        name = crew[0]
+        pattern = re.compile("^" + name + "_")
         for combo in prestige_data.prestiges:
-            if prestige_data.prestiges[combo] and process.extractOne(request.lower(),combo.lower().split('_'),scorer = sim_check_scorer)[1] > prestige_data.search_threshold:
-                result.append("%s = %s"%(([combo.title().split('_')][0]),prestige_data.prestiges[combo].title()))
-        if not result: #This is for inputs with no recipes
-            type_check = process.extractOne(request, character_data.crew.keys(), scorer = sim_check_scorer)
-            if type_check[1] > search_threshold:
-                type_result = character_data.crew[type_check[0]].rarity
-                if type_result in prestige_data.no_prestige_types:
-                    if type_result == "Special":
-                        phrase = "%s was parsed as **%s** which is %s type crew. Special crew cannot currently be made or used for prestige."%(request, type_check[0].title(), type_result)+"\nFor combinations to create the input crew, try ?recipe instead"
-                        await bot.say(phrase)
-                        return
-                    if type_result == "Legendary":
-                        phrase = "%s was parsed as **%s** which is %s type crew. Legendary is the highest tier of crew - therefore there are no combinations which use Legendary crew."%(request, type_check[0].title(), type_result)+"\nFor combinations to create the input crew, try ?recipe instead"
-                        await bot.say(phrase)
-                        return
-                    if type_result == "Common" or type_result == "Elite":
-                        phrase = "%s was parsed as **%s** which is %s type crew. Common and Elite crew combinations are not recorded."%(request, type_check[0].title(), type_result)+"\nFor combinations to create the input crew, try ?recipe instead"
-                        await bot.say(phrase)
-                        return                
-                await bot.say("%s was parsed as **%s**. There are no known recipes including %s"%(request, type_check[0], type_check[0].title())+source_check+"\nFor combinations to create the input crew, try ?recipe instead")
+            if prestige_data.prestiges[combo] and process.extractOne(request.lower(),combo.lower().split('_'), scorer = sim_check_scorer)[1] > prestige_data.search_threshold and re.match(pattern, combo):
+                    result.append("%s = %s"%(([combo.title().split('_')][0]),prestige_data.prestiges[combo].title()))
+        if result.__len__() == 0 : #This is for inputs with no recipes
+            rarity = character_data.crew[name].rarity
+            if crew[1] > search_threshold:
+                if rarity in prestige_data.no_prestige_types:
+                    if rarity == "Special":
+                        phrase = "%s was parsed as **%s** which is %s type crew. Special crew cannot currently be made or used for prestige."%(request, name.title(), rarity)+"\nFor combinations to create the input crew, try ?recipe instead"
+                    if rarity == "Legendary":
+                        phrase = "%s was parsed as **%s** which is %s type crew. Legendary is the highest tier of crew - therefore there are no combinations which use Legendary crew."%(request, name.title(), rarity  )+"\nFor combinations to create the input crew, try ?recipe instead"
+                    if rarity == "Common" or rarity == "Elite":
+                        phrase = "%s was parsed as **%s** which is %s type crew. Common and Elite crew combinations are not recorded."%(request, name[0].title(), rarity)+"\nFor combinations to create the input crew, try ?recipe instead"
+                    await bot.say(phrase)
+                    return
+                await bot.say("%s was parsed as **%s**. There are no known recipes including %s"%(request, name, name.title()) + source_check+"\nFor combinations to create the input crew, try ?recipe instead")
                 return
-            await bot.say("Input not quite recognized. The closest entry is ```\n%s``` If this is correct, try again with this spelling."%type_check[0].title())
+            await bot.say("Input not quite recognized. The closest entry is ```\n%s``` If this is correct, try again with this spelling."%name.title())
             return
         else:  # This is for valid inputs
-            short = sorted(set([x for x in prestige_data.hero+prestige_data.epic+prestige_data.unique if x[0] and fuzz.partial_ratio(request.lower(), x[0].lower()) > prestige_data.search_threshold][0][1:])) #will return the list which has the target in the 0th position, a column or row in the spreadsheet
-            phrase = "%s is listed as being used in:"%(request)+lined_string(short)
+            short = sorted(set([x for x in prestige_data.hero+prestige_data.epic+prestige_data.unique if x[0] and name == x[0].lower()][0][1:])) #will return the list which has the target in the 0th position, a column or row in the spreadsheet
+            phrase = "%s is listed as being used in:"%(name)+lined_string(short)
             await bot.say(phrase)
-            phrase = ("Full recipes are as follows:\n"+lined_string(sorted(set([x.title() for x in result]))))
+            phrase = ("Full recipes are as follows:\n" + lined_string(sorted(set([x.title() for x in result]))))
             #+"\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update"+"\nFor combinations to create the input crew, try ?recipe instead")
             while len(phrase) > 1950:
                 await bot.say(phrase[:phrase.find('[',1750)]+"```")
@@ -203,7 +202,7 @@ async def prestige(*,request : str):
         result_2 = "Unlisted"
     phrase = "%s was parsed as %s which yields:```\n%s```"%(request, key_1, result_1)
     await bot.say(phrase)
-    phrase = "%s yields:\n```\n%s```"%(key_2,result_2)+"\*\* = confirmed since December update\n$ = confirmed since March update\n# = rumored\nunmarked = NOT confirmed since December update"+"\nFor combinations to create the input crew, try ?recipe instead"
+    phrase = "%s yields:\n```\n%s```"%(key_2,result_2)+"\nFor combinations to create the input crew, try ?recipe instead"
     await bot.say(phrase)
 
 
