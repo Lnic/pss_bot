@@ -11,6 +11,15 @@ import Levenshtein
 
 search_threshold = 74
 
+common_color = 0xffffff
+unique_color = 0x09afff
+epic_color = 0x6f00dd
+hero_color = 0xfeb901
+legendary_color = 0xfeb901
+special_color = 0xffffff
+alert_color = 0xff0000
+
+
 logger = logging.getLogger('discord')
 logger.setLevel(logging.CRITICAL)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -127,22 +136,27 @@ async def recipe(*,request : str):
 
 @bot.command(aliases=["names"])
 async def namelist(request : str=''):
-    print(request)
+    #print(request)
     """returns a list of valid names"""
     if request.lower()=='legendary' or request.lower()=='legendaries' or request.lower()=='legend':
-        await bot.say('The following is a list of all known names of Legendary Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(prestige_data.legendaries)
+        embed = discord.Embed(title="The following is a list of all known names of Legendary Crew.", color=legendary_color)
+        embed.add_field(name="I will likely only understand names that are typed as follows:", value='\n'.join(prestige_data.legendaries), inline=True)
+        await bot.say(embed=embed)
     elif request.lower()=='hero' or request.lower()=='heroes':
-        await bot.say('The following is a list of all known names of Hero Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(prestige_data.heroes)
+        embed = discord.Embed(title="The following is a list of all known names of Hero Crew.", color=hero_color)
+        embed.add_field(name="I will likely only understand names that are typed as follows:", value='\n'.join(prestige_data.heroes), inline=True)
+        await bot.say(embed=embed)
     elif request.lower()=='epic' or request.lower()=='epics':
-        await bot.say('The following is a list of all known names of Epic Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(prestige_data.epics)
+        embed = discord.Embed(title="The following is a list of all known names of Epic Crew.", color=epic_color)
+        embed.add_field(name="I will likely only understand names that are typed as follows:", value='\n'.join(prestige_data.epics), inline=True)
+        await bot.say(embed=embed)
     elif request.lower()=='unique' or request.lower()=='uniques':
-        await bot.say('The following is a list of all known names of "Unique" Crew. I will likely only understand names that are typed as follows:')
-        await bot.say(prestige_data.uniques)
+        embed = discord.Embed(title="The following is a list of all known names of Unique Crew.", color=unique_color)
+        embed.add_field(name="I will likely only understand names that are typed as follows:", value='\n'.join(prestige_data.uniques), inline=True)
+        await bot.say(embed=embed)
     else:
-        await bot.say('Valid inputs include legendary, hero, epic, or unique')
+        embed = discord.Embed(title="Valid inputs include legendary, hero, epic, or unique", color=alert_color)
+        await bot.say(embed=embed)
 
 
 @bot.command(aliases=["Prestige"])
@@ -225,7 +239,7 @@ async def stats(*,request : str):
         similarity_check = process.extract(request, character_data.crew.keys(), scorer = fuzz.partial_ratio)
         if similarity_check[0][1] == similarity_check[1][1]:
             request = process.extractOne(request, character_data.crew.keys(), scorer = fuzz.token_sort_ratio)[0]
-        else:            
+        else:
             request = process.extractOne(request, character_data.crew.keys(), scorer = fuzz.partial_ratio)[0]
         name = character_data.crew[request].name.title()
         gender = character_data.crew[request].gender
@@ -247,9 +261,46 @@ async def stats(*,request : str):
         special_type = character_data.crew[request].special_type
         special = character_data.crew[request].special
         training = character_data.crew[request].training
-        equipment =  character_data.crew[request].equipment
-        phrase = "%s was parsed as **%s**\n"%(initial_request,request.title())+"```Name: %s \nGender: %s\nRace: %s \nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nRarity: %s \nProgression: %s \nXP: %s \nSpecial Type: %s \nSpecial: %s \nTraining: %s \nEquipment: %s - %s```"%(name, gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking, running, rarity, progression, xp, special_type, special, training, equipment, character_data.equipment_loadouts[int(character_data.crew[request].equipment)])
-        await bot.say(phrase)
+        equipment = character_data.crew[request].equipment
+
+        #phrase = "**Name:** %s \nGender: %s\nRace: %s \nHP: %s \nPilot: %s \nAttack: %s \nFire Resistance: %s \nRepair: %s \nWeapon: %s \nShield: %s \nEngine: %s \nResearch: %s \nWalking Speed: %s \nRunning Speed: %s\nRarity: %s \nProgression: %s \nXP: %s \nSpecial Type: %s \nSpecial: %s \nTraining: %s \nEquipment: %s - %s"%(name, gender, race, hp, pilot, attack, fire_resistance, repair, weapon, shield, engine, research, walking, running, rarity, progression, xp, special_type, special, training, equipment, character_data.equipment_loadouts[int(character_data.crew[request].equipment)])
+
+        if rarity == 'Common':
+            color = common_color
+        elif rarity == 'Unique':
+            color = unique_color
+        elif rarity == 'Epic':
+            color = epic_color
+        elif rarity == 'Hero':
+            color = hero_color
+        elif rarity == 'Legendary':
+            color = legendary_color
+        elif rarity == 'Special':
+            color = special_color
+
+        embed = discord.Embed(title="%s was parsed as **%s**\n"%(initial_request,request.title()), color=color)
+        embed.add_field(name="Name:", value=name, inline=True)
+        embed.add_field(name="Gender:", value=gender, inline=True)
+        embed.add_field(name="Race:", value=race, inline=True)
+        embed.add_field(name="Rarity:", value=rarity, inline=True)
+        embed.add_field(name="HP:", value=hp, inline=True)
+        embed.add_field(name="Repair:", value=repair, inline=True)
+        embed.add_field(name="Pilot:", value=pilot, inline=True)
+        embed.add_field(name="Attack:", value=attack, inline=True)
+        embed.add_field(name="Weapon:", value=weapon, inline=True)
+        embed.add_field(name="Shield:", value=shield, inline=True)
+        embed.add_field(name="Engine:", value=engine, inline=True)
+        embed.add_field(name="Fire Resistance:", value=fire_resistance, inline=True)
+        embed.add_field(name="Speed:", value=walking, inline=True)
+        embed.add_field(name="Running Speed:", value=running, inline=True)
+        embed.add_field(name="Equipment:", value=character_data.equipment_loadouts[int(character_data.crew[request].equipment)], inline=True)
+        embed.add_field(name="Special Type:", value=special_type, inline=True)
+        embed.add_field(name="Special:", value=special, inline=True)
+        embed.add_field(name="Training:", value=training, inline=True)
+        #embed.set_thumbnail(url="https://image.flaticon.com/teams/slug/freepik.jpg")
+        await bot.say(embed=embed)
+
+        #await bot.say(phrase)
         repair = character_data.crew[request].stats_equip['Repair']
         attack = character_data.crew[request].stats_equip['Attack']
         pilot = character_data.crew[request].stats_equip['Pilot']
@@ -259,8 +310,32 @@ async def stats(*,request : str):
         ability = character_data.crew[request].stats_equip['Ability']
         shield = character_data.crew[request].stats_equip['Shield']
         weapon = character_data.crew[request].stats_equip['Weapon']
-        phrase = "With 50 training and the best available equipment, those stats could become:\n```\nName: %s\nHP: %s\nAttack: %s\nRepair: %s\nPilot: %s\nFire Resistance: %s\nStamina: %s\nSpecial Type: %s\nSpecial: %s\nShield: %s\nWeapon: %s```"%(name, hp, attack, repair, pilot, fire_resistance, stamina, special_type, ability, shield, weapon)
-        await bot.say(phrase)
+        engine = character_data.crew[request].stats_equip['Engine']
+
+        #phrase = "```\nName: %s\nHP: %s\nAttack: %s\nRepair: %s\nPilot: %s\nFire Resistance: %s\nStamina: %s\nSpecial Type: %s\nSpecial: %s\nShield: %s\nWeapon: %s```"%(name, hp, attack, repair, pilot, fire_resistance, stamina, special_type, ability, shield, weapon)
+        embed = discord.Embed(title="With 50 training and the best available equipment, those stats could become:", color=color)
+        embed.add_field(name="HP:", value=' with '.join(map(str, hp)), inline=False)
+        embed.add_field(name="Repair:", value=' with '.join(map(str, repair)), inline=False)
+        embed.add_field(name="Pilot:", value=' with '.join(map(str, pilot)), inline=False)
+        embed.add_field(name="Attack:", value=' with '.join(map(str, attack)), inline=False)
+        embed.add_field(name="Weapon:", value=' with '.join(map(str, weapon)), inline=False)
+        embed.add_field(name="Shield:", value=' with '.join(map(str, shield)), inline=False)
+        embed.add_field(name="Engine:", value=' with '.join(map(str, engine)), inline=False)
+
+        # Exception for fire resistance, to have a better printable result
+        if fire_resistance[1] == '':
+            fire_resistance[0] = fire_resistance[0]
+            print_fire_resistance = fire_resistance[0]
+        else:
+            fire_resistance[1] = fire_resistance[1][2:]
+            print_fire_resistance = ' with '.join(map(str, fire_resistance))
+
+        embed.add_field(name="Fire Resistance:", value=print_fire_resistance, inline=False)
+        embed.add_field(name="Special Type:", value=special_type, inline=False)
+        embed.add_field(name="Special:", value=' with '.join(map(str, ability)), inline=False)
+        embed.add_field(name="Stamina:", value=' with '.join(map(str, stamina)), inline=False)
+        await bot.say(embed=embed)
+        #await bot.say(phrase)
         return
     if request[1][0] == ' ':
         request[1] = request[1][1:]
