@@ -39,6 +39,8 @@ class Equipment:
         itemid = {}
         itemid[self.name] = self.itemid
 
+        rarity_start = source.find("Rarity") + len("Rarity") + 2
+        self.rarity = source[rarity_start:source.find('"', rarity_start)]
 
 while source.find("ItemDesign ", 1) > 0:  # This block will create all crew equipment entries
     source = source[source.find("ItemDesign ", 1):]
