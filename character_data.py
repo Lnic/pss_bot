@@ -1,6 +1,6 @@
 import urllib.request
 import equipment_data
-
+import sprite_data
 
 def finder(target, source):
     return source[source.find(target)+len(target)+1:source.find('"',source.find(target)+len(target)+2)]
@@ -34,6 +34,12 @@ class Crew:
         self.special = float(finder("SpecialAbilityFinalArgument=",source))
         self.training = float(finder("TrainingCapacity=",source))
         self.equipment = finder("EquipmentMask=",source)
+
+        spriteid_start = source.find("ProfileSpriteId") + len("ProfileSpriteId") + 2
+        self.spriteid = source[spriteid_start:source.find('"', spriteid_start)]
+        self.fileID = sprite_data.sprite_id_map[self.spriteid]
+
+        self.fileID = sprite_data.sprite_id_map[self.spriteid]
         if self.equipment == "8":
             self.slots = ["EquipmentWeapon"]
         if self.equipment == "0":
@@ -43,7 +49,7 @@ class Crew:
             self.slots = equipment_loadouts[int(self.equipment)].split(' and ')
             for entry in range(len(self.slots)):
                 self.slots[entry] = 'Equipment'+self.slots[entry]
-        self.stats_equip = {"Repair":[self.repair, ''], "Attack":[self.attack*1.5, '+ 50% Training'], "Pilot":[self.pilot, ''], "FireResistance":[self.fire_resistance, ''], "Hp":[self.hp*1.5, '+ 50% Training'], "Stamina":[50, '+ 50 Training'], "Ability":[0, '+ 50% Training'], "Shield":[self.shield, ''], "Weapon":[self.weapon, ''], "Engine":[self.engine, '']}
+        self.stats_equip = {"Repair":[self.repair*1.5, ' 50% Training'], "Attack":[self.attack*1.5, ' 50% Training'], "Pilot":[self.pilot*1.5, ' 50% Training'], "FireResistance":[self.fire_resistance, ''], "Hp":[self.hp*1.5, ' 50% Training'], "Stamina":[50, ' 50 Training'], "Ability":[0, ' 50% Training'], "Shield":[self.shield*1.5, '50% Training'], "Weapon":[self.weapon*1.5, ' 50% Training'], "Engine":[self.engine*1.5, ' 50% Training']}
         if "NoEquipment" not in self.slots :
             for slot in self.slots:  # Training values are assumed to be 50. Ability will need to be divided by 100 and then multiplied by self.special*training
                 for stat in equipment_data.max_augment[slot]:  # Individual stats of top tier item

@@ -35,6 +35,7 @@ sub_hero = [x[0].lower() for x in hero if x[0]]
 sub_epic = [x[0].lower() for x in epic if x[0]]
 sub_unique = [x[0].lower() for x in unique if x[0]]
 
+
 add_to_prestiges(heroes,hero)
 legendaries = list(set([x.lower() for x in prestiges.values()]))
 add_to_prestiges(epics,epic)

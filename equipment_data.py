@@ -1,4 +1,5 @@
 import urllib.request
+#import sprite_data
 
 source = urllib.request.urlopen(r'http://api.pixelstarships.com/ItemService/ListItemDesigns2?languageKey=en').read()
 source = source.decode("utf-8")
@@ -39,6 +40,13 @@ class Equipment:
         itemid = {}
         itemid[self.name] = self.itemid
 
+        rarity_start = source.find("Rarity") + len("Rarity") + 2
+        self.rarity = source[rarity_start:source.find('"', rarity_start)]
+
+        #spriteid_start = source.find("ImageSpriteId") + len("ImageSpriteId") + 2
+        #self.spriteid = source[spriteid_start:source.find('"', spriteid_start)]
+
+        #self.fileID = sprite_data.sprite_id_map[self.spriteid]
 
 while source.find("ItemDesign ", 1) > 0:  # This block will create all crew equipment entries
     source = source[source.find("ItemDesign ", 1):]
@@ -59,7 +67,7 @@ while source.find("ItemDesign ", 1) > 0:  # This block will create all crew equi
 
 #for equip in Equipment.equipment:
 #     print(equip)
-#     print(Equipment.equipment[equip].itemid)
+#     print(Equipment.equipment[equip].fileID)
 #print(item_id_map)
 
 
