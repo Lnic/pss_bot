@@ -1,6 +1,6 @@
 import urllib.request
 import equipment_data
-
+import sprite_data
 
 def finder(target, source):
     return source[source.find(target)+len(target)+1:source.find('"',source.find(target)+len(target)+2)]
@@ -34,6 +34,12 @@ class Crew:
         self.special = float(finder("SpecialAbilityFinalArgument=",source))
         self.training = float(finder("TrainingCapacity=",source))
         self.equipment = finder("EquipmentMask=",source)
+
+        spriteid_start = source.find("ProfileSpriteId") + len("ProfileSpriteId") + 2
+        self.spriteid = source[spriteid_start:source.find('"', spriteid_start)]
+        self.fileID = sprite_data.sprite_id_map[self.spriteid]
+
+        self.fileID = sprite_data.sprite_id_map[self.spriteid]
         if self.equipment == "8":
             self.slots = ["EquipmentWeapon"]
         if self.equipment == "0":

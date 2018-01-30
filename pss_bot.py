@@ -64,7 +64,7 @@ async def on_ready():
     await bot.change_presence(game=discord.Game(name='try ?help (prestige, recipe, stats, equipment, crew)'))
 
 
-@bot.command(aliases=["Spreadsheet", "spread", "Spread"], category = 'Sources')
+@bot.command(aliases=["Spreadsheet", "spread", "Spread"], category='Sources')
 async def spreadsheet():
     """: Returns the URL for the prestige spreadsheet"""
     await bot.say(r"https://docs.google.com/spreadsheets/d/1Sn1yHJVqcN1bJGqhvEitgNSnT2NIS8hSRYqCLAqubKk/edit#gid=1068686197")
@@ -74,7 +74,7 @@ async def spreadsheet():
 async def recipe(*,request : str):
     """: 1 crew => Combinations which create that crew ;
     1 result, 1 reagent => Combinations which use reagent for result"""
-    if request.lower()=='help' or request.lower()=='names':
+    if request.lower() == 'help' or request.lower() == 'names':
         embed = discord.Embed(title="Names for prestige.", color=ok_color)
         embed.add_field(name="Results are:", value='\n'.join(prestige_data.all_prestige_results), inline=False)
         await bot.say(embed=embed)
@@ -86,7 +86,7 @@ async def recipe(*,request : str):
     else:  # This will handle single name requests
         result = []
         # This will try to thin out the results so Demon Boy and Golden Boy don't show up together, etc.
-        similarity_check = process.extract(request.lower(), request, scorer = fuzz.partial_ratio)
+        similarity_check = process.extract(request.lower(), request, scorer=fuzz.partial_ratio)
         if similarity_check[0][1] == similarity_check[1][1]:
             sim_check_scorer = fuzz.token_sort_ratio
         else:
@@ -94,7 +94,7 @@ async def recipe(*,request : str):
         # Find all prestige combinations that generate the request
         for combo in prestige_data.prestiges:
             if sim_check_scorer(request.lower(), prestige_data.prestiges[combo]) > prestige_data.search_threshold:
-                result.append("%s = %s"%(([combo.title().split('_')][0]),prestige_data.prestiges[combo].title()))
+                result.append("%s = %s"%(([combo.title().split('_')][0]), prestige_data.prestiges[combo].title()))
         if result == []:
             unique_check = process.extractOne(request, prestige_data.uniques, scorer=sim_check_scorer)
             if unique_check[1] > prestige_data.search_threshold:
@@ -134,9 +134,9 @@ async def recipe(*,request : str):
         # Names[0] is the child/product here. This yields a list of all recipes making the child/product
         if prestige_data.prestiges[combo] and fuzz.partial_ratio(names[0], prestige_data.prestiges[combo]) > prestige_data.search_threshold:
             # Entries in result will be the full combination
-            result.append("%s = %s"%(([combo.split('_')][0]),prestige_data.prestiges[combo]))
+            result.append("%s = %s"%(([combo.split('_')][0]), prestige_data.prestiges[combo]))
     # Take only entries which contain the parent/reagent, names[1]
-    result = [x.title() for x in result if fuzz.partial_ratio(names[1],x) > prestige_data.search_threshold]
+    result = [x.title() for x in result if fuzz.partial_ratio(names[1], x) > prestige_data.search_threshold]
     # If no entries contained the previous parent/reagent, names[1]...
     if not result:
         # Try it the other way around with names[1] as the child/product
@@ -145,7 +145,7 @@ async def recipe(*,request : str):
             if prestige_data.prestiges[combo] and fuzz.partial_ratio(names[1], prestige_data.prestiges[combo]) > prestige_data.search_threshold:
                 result.append("%s = %s"%(([combo.split('_')][0]), prestige_data.prestiges[combo]))
         # Take only entries which contain the parent/reagent, names[0]
-        result = [x.title() for x in result if fuzz.partial_ratio(names[0],x) > prestige_data.search_threshold]
+        result = [x.title() for x in result if fuzz.partial_ratio(names[0], x) > prestige_data.search_threshold]
         if not result:
             embed = discord.Embed(title="I see no relation between %s and %s"%(names[0].title(), names[1].title()),
                                   description=source_check + "\nFor combinations which use the input crew, "
@@ -158,14 +158,14 @@ async def recipe(*,request : str):
             while len(phrase) > 1950:
                 # Split is made on "\n" to avoid the cut on the middle of a word
                 embed = discord.Embed(title="According to records, pertinent combinations between %s and %s are as follows:"\
-                                            %(names[0].title(),names[1].title()),
+                                            %(names[0].title(), names[1].title()),
                                       description=phrase[:phrase.find('\n', 1600)],
                                       color=ok_color)
                 await bot.say(embed=embed)
                 phrase = phrase[phrase.find('\n', 1600):]
             # When request is < 1950 we print the end
             embed = discord.Embed(title="According to records, pertinent combinations between %s and %s are as follows:"
-                                        %(names[0].title(),names[1].title()),
+                                        %(names[0].title(), names[1].title()),
                                   description=phrase,
                                   color=ok_color)
             await bot.say(embed=embed)
@@ -426,7 +426,9 @@ async def stats(*,request : str):
         embed.add_field(name="Special Type:", value=special_type, inline=True)
         embed.add_field(name="Special:", value=special, inline=True)
         embed.add_field(name="Training:", value=training, inline=True)
-        #embed.set_thumbnail(url="https://image.flaticon.com/teams/slug/freepik.jpg")
+
+        url = "http://datxcu1rnppcg.cloudfront.net/" + character_data.crew[request].fileID + ".png"
+        embed.set_thumbnail(url=url)
         await bot.say(embed=embed)
 
         repair = character_data.crew[request].stats_equip['Repair']
@@ -589,6 +591,9 @@ async def equipment(*,request : str):
                               description=character_data.equipment_data.Equipment.equipment[result].parameter_type +
                                           ": " + character_data.equipment_data.Equipment.equipment[result].value,
                               color=color)
+        #url = "http://datxcu1rnppcg.cloudfront.net/" + character_data.equipment_data.Equipment.equipment[result].fileID + ".png"
+        #print(url)
+        #embed.set_thumbnail(url=url)
         embed.add_field(name="Created from:", value=recipe, inline=False)
         await bot.say(embed=embed)
 
