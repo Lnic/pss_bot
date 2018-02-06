@@ -58,7 +58,8 @@ async def on_ready():
 @bot.command(aliases=["Sell"], pass_context=True)
 async def sell(ctx):
 
-    id = str(ctx.message.author.id)
+    #id = str(ctx.message.author.id)
+    id = str(ctx.message.author.name)
     item = str(ctx.message.content)
     item = item.replace('?sell ', '')
 
@@ -80,7 +81,8 @@ async def sell(ctx):
 @bot.command(aliases=["Buy"], pass_context=True)
 async def buy(ctx):
     
-    id = str(ctx.message.author.id)
+    #id = str(ctx.message.author.id)
+    id = str(ctx.message.author.name)
     item = str(ctx.message.content)
     item = item.replace('?buy ', '')
 
@@ -101,7 +103,8 @@ async def buy(ctx):
 
 @bot.command(aliases=["Swap"], pass_context=True)
 async def swap(ctx):
-    id = str(ctx.message.author.id)
+    #id = str(ctx.message.author.id)
+    id = str(ctx.message.author.name)
     item = str(ctx.message.content)
     item = item.replace('?swap ', '')
 
@@ -160,7 +163,8 @@ async def list(ctx):
 @bot.command(aliases=["Clear"], pass_context=True)
 async def clear(ctx, request : str):
 
-    id = ctx.message.author.id
+    #id = str(ctx.message.author.id)
+    id = str(ctx.message.author.name)
 
     today = datetime.date.today()
     
